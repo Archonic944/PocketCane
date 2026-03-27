@@ -30,6 +30,6 @@ struct DepthLevels {
 }
 
 struct AppConfig {
-    static let baseApertureSize: Double = 0.15
+    static let baseApertureSize: Double = 0.12
 }
 

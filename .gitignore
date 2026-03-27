@@ -1,1 +1,11 @@
+# Local configuration
 LiDARCameraApp/RuntimeMaterial.swift
+
+# Local file patterns
+*.secret
+*.secrets
+*.key
+*.keys
+.env
+.env.*
+*.pdf
