@@ -39,7 +39,9 @@ class CameraViewController: UIViewController {
     // UI components
     private var depthPreviewView: UIImageView!
     private var apertureCircleView: UIView!
+    #if DEBUG
     private var debugLabel: UILabel!
+    #endif
     private var disparityContainer: UIView!
     
     // Action Buttons
@@ -81,7 +83,9 @@ class CameraViewController: UIViewController {
         UIApplication.shared.isIdleTimerDisabled = true
         setupDepthPreviewView()
         setupApertureCircle()
+        #if DEBUG
         setupDebugLabel()
+        #endif
         setupGestureManager()
         setupButtons()
         setupAnalysisUI()
@@ -253,6 +257,7 @@ class CameraViewController: UIViewController {
         circle.layer.borderColor = UIColor.white.withAlphaComponent(0.6).cgColor
     }
 
+    #if DEBUG
     /// Sets up the debug label for surface analysis readouts
     private func setupDebugLabel() {
         debugLabel = UILabel()
@@ -272,6 +277,8 @@ class CameraViewController: UIViewController {
             debugLabel.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, constant: -24)
         ])
     }
+
+    #endif
 
     /// Sets up gesture manager for tap-to-calibrate and depth range cycling
     private func setupGestureManager() {
@@ -782,11 +789,13 @@ extension CameraViewController: AVCaptureDepthDataOutputDelegate {
             hapticManager.fireTransientPulse(intensity: 1.0, sharpness: 1.0)
         }
 
+        #if DEBUG
         // Update debug label with surface analysis readouts
         let debugText = String(format: " dot: %.2f  \u{0394}d: %.3fm  angle: %.0f\u{00B0} ", result.normalDot, result.depthDelta, result.angleDegrees)
         Task { @MainActor in
             self.debugLabel.text = debugText
         }
+        #endif
 
         // Sample center depth for haptic feedback (in meters)
         let centerDepthMeters = depthProcessor.sampleCenterDepth(from: processedDepthMap)
