@@ -1,0 +1,5 @@
+// Copy to LiDARCameraApp/RuntimeMaterial.swift for local configuration.
+
+enum RuntimeMaterial {
+    static func resolve() -> String { "" }
+}

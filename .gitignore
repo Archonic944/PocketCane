@@ -1,5 +1,8 @@
 # Local configuration
 LiDARCameraApp/RuntimeMaterial.swift
+.local-tools/
+commit-log.txt
+*~lock~
 
 # Local file patterns
 *.secret

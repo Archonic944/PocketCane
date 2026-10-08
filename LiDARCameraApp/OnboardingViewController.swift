@@ -72,7 +72,7 @@ class OnboardingViewController: UIViewController {
             ),
             (
                 title: "Happy Navigating!",
-                body: "You're all set. Remember: practice in safe, familiar spaces before relying on PocketCane elsewhere.\n\nTap \"Get Started\" to begin."
+                body: "You're all set. Remember: practice in safe, familiar first. Don't use the app in place of a traditional navigational aid.\n\nTap \"Get Started\" to begin."
             ),
         ]
     }
@@ -80,7 +80,7 @@ class OnboardingViewController: UIViewController {
     // MARK: - UI Setup
 
     private func setupUI() {
-        view.backgroundColor = .black
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.4)
 
         // Title
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
