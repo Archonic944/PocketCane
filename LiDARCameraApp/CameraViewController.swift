@@ -137,6 +137,7 @@ class CameraViewController: UIViewController {
         
         lengthenButton.accessibilityLabel = "Lengthen depth range"
         lengthenButton.accessibilityHint = "Increases the maximum distance sensed"
+        updateDepthLevelAccessibility()
 
         controlsStackView = UIStackView(arrangedSubviews: [shortenButton, lengthenButton])
         controlsStackView.translatesAutoresizingMaskIntoConstraints = false
@@ -401,6 +402,7 @@ class CameraViewController: UIViewController {
             updateDepthRangeToCurrentLevel()
             hapticManager.fireTransientPulse(intensity: 0.6, sharpness: 0.3)
         }
+        announceCurrentDepthLevel()
     }
     
     @objc private func onLengthenPressed() {
@@ -409,6 +411,7 @@ class CameraViewController: UIViewController {
             updateDepthRangeToCurrentLevel()
             hapticManager.fireTransientPulse(intensity: 0.8, sharpness: 0.5)
         }
+        announceCurrentDepthLevel()
     }
     
     @objc private func onDescribeKeyItemPressed() {
@@ -719,7 +722,22 @@ extension CameraViewController: GestureManagerDelegate {
         updateDepthRangeToCurrentLevel()
     }
     
+    private var currentDepthLevelName: String {
+        ["Shortest", "Medium", "Longest"][currentDepthLevelIndex]
+    }
+
+    private func updateDepthLevelAccessibility() {
+        shortenButton?.accessibilityValue = currentDepthLevelName
+        lengthenButton?.accessibilityValue = currentDepthLevelName
+    }
+
+    private func announceCurrentDepthLevel() {
+        guard UIAccessibility.isVoiceOverRunning else { return }
+        UIAccessibility.post(notification: .announcement, argument: currentDepthLevelName)
+    }
+
     private func updateDepthRangeToCurrentLevel() {
+        updateDepthLevelAccessibility()
         let level = DepthLevels.all[currentDepthLevelIndex]
         depthProcessor.minDisparity = level.min
         depthProcessor.maxDisparity = level.max
