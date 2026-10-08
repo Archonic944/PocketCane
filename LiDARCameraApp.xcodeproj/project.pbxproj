@@ -6,7 +6,14 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A10000000000000000000001 /* docs/privacy-policy.html in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000003 /* docs/privacy-policy.html */; };
+		A10000000000000000000002 /* docs/ai-providers.html in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000004 /* docs/ai-providers.html */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		A10000000000000000000003 /* docs/privacy-policy.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "docs/privacy-policy.html"; sourceTree = SOURCE_ROOT; };
+		A10000000000000000000004 /* docs/ai-providers.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "docs/ai-providers.html"; sourceTree = SOURCE_ROOT; };
 		C0A7EA562E9C848C0090C895 /* PocketCane.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PocketCane.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -45,6 +52,8 @@
 		C0A7EA4D2E9C848C0090C895 = {
 			isa = PBXGroup;
 			children = (
+				A10000000000000000000003 /* docs/privacy-policy.html */,
+				A10000000000000000000004 /* docs/ai-providers.html */,
 				C0A7EA582E9C848C0090C895 /* LiDARCameraApp */,
 				C0A7EA572E9C848C0090C895 /* Products */,
 			);
@@ -122,6 +131,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000000000000000000001 /* docs/privacy-policy.html in Resources */,
+				A10000000000000000000002 /* docs/ai-providers.html in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

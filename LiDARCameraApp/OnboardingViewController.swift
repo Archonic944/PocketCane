@@ -9,6 +9,7 @@ import UIKit
 import AVFoundation
 
 class OnboardingViewController: UIViewController {
+    var onFinish: (() -> Void)?
 
     // MARK: - Properties
 
@@ -68,7 +69,7 @@ class OnboardingViewController: UIViewController {
             ),
             (
                 title: "AI Features",
-                body: "Two additional buttons, \"Key Item\" and \"Environment,\" both require internet access.\n\n\"Key Item\" briefly describes what you're holding or pointing at—text, color, shape, and size.\n\n\"Environment\" gives a brief overview of your surroundings. Keep your phone aligned with your body when using it."
+                body: "Two additional buttons, \"Key Item\" and \"Environment,\" send a photo for online AI processing only when you use them and allow photo sharing. Camera and LiDAR feedback stay on your device.\n\n\"Key Item\" briefly describes what you're holding or pointing at—text, color, shape, and size.\n\n\"Environment\" gives a brief overview of your surroundings. Keep your phone aligned with your body when using it."
             ),
             (
                 title: "Happy Navigating!",
@@ -222,6 +223,6 @@ class OnboardingViewController: UIViewController {
 
     private func finishOnboarding() {
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
-        dismiss(animated: true)
+        dismiss(animated: true, completion: onFinish)
     }
 }

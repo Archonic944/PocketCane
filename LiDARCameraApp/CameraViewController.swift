@@ -62,7 +62,7 @@ class CameraViewController: UIViewController {
     // Cached depth data for tap-to-calibrate
     private var latestDepthData: AVDepthData?
     
-    // Gemini Analysis State
+    // AI Analysis State
     private enum AnalysisState {
         case idle
         case analyzing
@@ -85,6 +85,7 @@ class CameraViewController: UIViewController {
         setupGestureManager()
         setupButtons()
         setupAnalysisUI()
+        setupAppInformationButton()
         if FeatureFlags.tuningMode {
             setupDisparityControls()
         }
@@ -151,6 +152,23 @@ class CameraViewController: UIViewController {
         // VoiceOver Accessibility for descriptions
         describeKeyItemButton.accessibilityLabel = "Describe and read a key item in the frame, especially an item that you are holding."
         describeBackgroundButton.accessibilityLabel = "Give a brief overview of your surroundings in the frame."
+
+        for button in [describeKeyItemButton!, describeBackgroundButton!] {
+            button.menu = UIMenu(children: [
+                UIAction(title: "Privacy", image: UIImage(systemName: "hand.raised")) { [weak self, weak button] _ in
+                    guard let button = button else { return }
+                    self?.showPrivacyOptions(from: button)
+                }
+            ])
+            button.showsMenuAsPrimaryAction = false
+            button.accessibilityCustomActions = [
+                UIAccessibilityCustomAction(name: "Privacy") { [weak self, weak button] _ in
+                    guard let self = self, let button = button else { return false }
+                    self.showPrivacyOptions(from: button)
+                    return true
+                }
+            ]
+        }
 
         descriptionStackView = UIStackView(arrangedSubviews: [describeKeyItemButton, describeBackgroundButton])
         descriptionStackView.translatesAutoresizingMaskIntoConstraints = false
@@ -395,6 +413,7 @@ class CameraViewController: UIViewController {
     
     @objc private func onDescribeKeyItemPressed() {
         guard analysisState != .analyzing else { return }
+        guard requestAIConsent(retry: { [weak self] in self?.onDescribeKeyItemPressed() }) else { return }
         
         // If showing a result, we can just overwrite it with "Analyzing..." and start new capture
         analysisState = .analyzing
@@ -404,7 +423,7 @@ class CameraViewController: UIViewController {
         
         let settings = AVCapturePhotoSettings()
         settings.photoQualityPrioritization = .speed
-        settings.isDepthDataDeliveryEnabled = false // No depth needed for Gemini
+        settings.isDepthDataDeliveryEnabled = false // Depth is not sent for AI descriptions
         settings.embedsDepthDataInPhoto = false
         photoOutput.capturePhoto(with: settings, delegate: self)
         
@@ -413,6 +432,7 @@ class CameraViewController: UIViewController {
     
     @objc private func onDescribeBackgroundPressed() {
         guard analysisState != .analyzing else { return }
+        guard requestAIConsent(retry: { [weak self] in self?.onDescribeBackgroundPressed() }) else { return }
         
         analysisState = .analyzing
         hapticManager.fireTransientPulse(intensity: 0.5, sharpness: 0.5)
@@ -428,6 +448,83 @@ class CameraViewController: UIViewController {
         showAnalysisOverlay(text: "Analyzing...")
     }
     
+    private func setupAppInformationButton() {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "info.circle", withConfiguration: UIImage.SymbolConfiguration(pointSize: 20)), for: .normal)
+        button.tintColor = .white
+        button.backgroundColor = UIColor.black.withAlphaComponent(0.65)
+        button.layer.cornerRadius = 8
+        button.isAccessibilityElement = true
+        button.accessibilityLabel = "App Information"
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.menu = UIMenu(children: [
+            UIAction(title: "Replay Tutorial", image: UIImage(systemName: "arrow.counterclockwise")) { [weak self, weak button] _ in
+                guard let button = button else { return }
+                self?.replayTutorial(from: button)
+            },
+            UIAction(title: "Privacy Policy", image: UIImage(systemName: "hand.raised")) { [weak self, weak button] _ in
+                self?.showPrivacyPolicy(from: button)
+            }
+        ])
+        button.showsMenuAsPrimaryAction = true
+        view.addSubview(button)
+        NSLayoutConstraint.activate([
+            button.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
+            button.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            button.widthAnchor.constraint(equalToConstant: 44),
+            button.heightAnchor.constraint(equalToConstant: 44)
+        ])
+    }
+
+    private func replayTutorial(from button: UIButton) {
+        guard presentedViewController == nil else { return }
+        let tutorial = OnboardingViewController()
+        tutorial.modalPresentationStyle = .fullScreen
+        tutorial.onFinish = { [weak button] in
+            UIAccessibility.post(notification: .screenChanged, argument: button)
+        }
+        present(tutorial, animated: true)
+    }
+
+    private func showPrivacyOptions(from button: UIButton) {
+        guard presentedViewController == nil else { return }
+        let navigation = PrivacyNavigationController(rootViewController: PrivacyOptionsViewController())
+        let returnFocus = button.isAccessibilityElement ? button : describeKeyItemButton!
+        navigation.onClose = { [weak returnFocus] in
+            UIAccessibility.post(notification: .screenChanged, argument: returnFocus)
+        }
+        present(navigation, animated: true)
+    }
+
+    private func showPrivacyPolicy(from button: UIButton? = nil) {
+        guard presentedViewController == nil else { return }
+        let navigation = PrivacyNavigationController(rootViewController: PrivacyPolicyViewController())
+        navigation.onClose = { [weak button] in
+            UIAccessibility.post(notification: .screenChanged, argument: button)
+        }
+        present(navigation, animated: true)
+    }
+
+    private func requestAIConsent(retry: @escaping () -> Void) -> Bool {
+        if AIPrivacy.hasConsent { return true }
+        guard presentedViewController == nil else { return false }
+        let alert = UIAlertController(
+            title: "Allow AI Photo Sharing?",
+            message: AIPrivacy.sharingExplanation,
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Allow and Describe", style: .default) { _ in
+            AIPrivacy.grantConsent()
+            retry()
+        })
+        alert.addAction(UIAlertAction(title: "Privacy Policy", style: .default) { [weak self] _ in
+            self?.showPrivacyPolicy()
+        })
+        alert.addAction(UIAlertAction(title: "Not Now", style: .cancel))
+        present(alert, animated: true)
+        return false
+    }
+
     private func setupAnalysisUI() {
         // Create a container view for the overlay
         analysisOverlay = UIView()
@@ -736,10 +833,10 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
                 return
             }
 
-            // Check if this capture is for Gemini analysis
+            // Check if this capture is for AI analysis
             if let prompt = prompt {
                 // Perform analysis
-                GeminiService.shared.generateContent(prompt: prompt, image: image) { [weak self] result in
+                SceneAnalysisService.shared.generateContent(prompt: prompt, image: image) { [weak self] result in
                     DispatchQueue.main.async {
                         guard let self = self else { return }
                         
@@ -753,12 +850,14 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
                         case .failure(let error):
                             let errorMsg: String
                             switch error {
+                            case .consentRequired:
+                                errorMsg = "Allow photo sharing to use AI descriptions."
                             case .unavailableConfiguration:
                                 errorMsg = "Scene analysis is unavailable."
                             case .networkError(let err):
                                 errorMsg = "Network error: \(err.localizedDescription)"
                             case .apiError(let msg):
-                                errorMsg = "Gemini Error: \(msg)"
+                                errorMsg = msg
                             default:
                                 errorMsg = "Analysis failed. Please try again."
                             }

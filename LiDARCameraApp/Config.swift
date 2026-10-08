@@ -32,3 +32,26 @@ struct DepthLevels {
 struct AppConfig {
     static let baseApertureSize: Double = 0.12
 }
+
+// Keep the provider disclosure and docs/ai-providers.html aligned with routing changes.
+enum AIConfiguration {
+    static let model = "bytedance-seed/seed-2.0-lite"
+    static let provider = "seed/fp8"
+    static let recipients = "OpenRouter and ByteDance Seed"
+}
+
+enum AIPrivacy {
+    static let sharingExplanation = "Only when you tap Key Item or Environment, a photo and description request are sent to \(AIConfiguration.recipients). Photos may contain people, text or other personal information. These services process the photo to return a description.\n\nCamera and LiDAR feedback stay on your device and work without AI photo sharing."
+    // New recipients or material changes to processing require renewed permission.
+    static let consentVersion = "openrouter-2026-10-07-v1:" + AIConfiguration.provider
+    static let consentKey = "aiPhotoSharingConsent"
+    static var hasConsent: Bool {
+        UserDefaults.standard.string(forKey: consentKey) == consentVersion
+    }
+    static func grantConsent() {
+        UserDefaults.standard.set(consentVersion, forKey: consentKey)
+    }
+    static func revokeConsent() {
+        UserDefaults.standard.removeObject(forKey: consentKey)
+    }
+}
